@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
 // KaTeX 的样式（含字体）只在这个 chunk 里加载，首页访客不必下载
@@ -92,11 +92,13 @@ function renderMarkdown(markdown: string): { html: string; headings: Heading[] }
   return { html: instance.parse(markdown) as string, headings }
 }
 
-/** 文章大纲：点标题跳到锚点，滚动时高亮当前小节 */
+/**
+ * 文章大纲。宽屏时是右侧的 sticky 侧栏，跟着正文滚动一直可见；
+ * 窄屏时落到正文上方（没有侧栏可用），自身带滚动条，不会把正文顶下去。
+ */
 function Toc({ headings }: { headings: Heading[] }) {
   const [activeId, setActiveId] = useState('')
-  // 节数多的时候默认折叠，免得目录占满整个首屏
-  const [open, setOpen] = useState(headings.length <= 12)
+  const navRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const onScroll = () => {
@@ -114,19 +116,32 @@ function Toc({ headings }: { headings: Heading[] }) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [headings])
 
+  // 高亮项滚出侧栏可视区时，只滚目录自己，别动整个页面
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav || !activeId) return
+
+    const active = nav.querySelector<HTMLElement>('a.is-active')
+    if (!active) return
+
+    const navRect = nav.getBoundingClientRect()
+    const activeRect = active.getBoundingClientRect()
+
+    if (activeRect.top < navRect.top) {
+      nav.scrollTop -= navRect.top - activeRect.top + 8
+    } else if (activeRect.bottom > navRect.bottom) {
+      nav.scrollTop += activeRect.bottom - navRect.bottom + 8
+    }
+  }, [activeId])
+
   if (headings.length === 0) return null
 
   return (
-    <details
-      className="toc"
-      open={open}
-      // 受控 + 同步：滚动高亮会频繁重渲染，不这样会把用户展开的状态顶回去
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary className="toc-title">
+    <nav className="toc" aria-label="文章目录" ref={navRef}>
+      <p className="toc-title">
         目录
         <span className="toc-count">{headings.length} 节</span>
-      </summary>
+      </p>
 
       <ul className="toc-list">
         {headings.map((heading) => (
@@ -142,7 +157,7 @@ function Toc({ headings }: { headings: Heading[] }) {
           </li>
         ))}
       </ul>
-    </details>
+    </nav>
   )
 }
 
@@ -173,47 +188,54 @@ export default function PostView({ post }: { post: Post }) {
 
   return (
     <article className="post">
-      <Link className="back" href="/#blog">
-        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-          <path
-            d="M15 5 8 12l7 7"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        返回列表
-      </Link>
+      {/* 网格：宽屏时 toc 独占右列并 sticky，窄屏时按 head → toc → content 依次堆叠 */}
+      <div className="post-main">
+        <div className="post-head">
+          <Link className="back" href="/#blog">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path
+                d="M15 5 8 12l7 7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            返回列表
+          </Link>
 
-      <h1>{post.title}</h1>
+          <h1>{post.title}</h1>
 
-      <div className="post-meta post-meta-lg">
-        <time dateTime={post.date}>{formatPostDate(post.date)}</time>
-        <span className="sep" aria-hidden="true">
-          ·
-        </span>
-        <span>{post.minutes} 分钟阅读</span>
-        {post.draft ? <span className="badge">示例文章</span> : null}
+          <div className="post-meta post-meta-lg">
+            <time dateTime={post.date}>{formatPostDate(post.date)}</time>
+            <span className="sep" aria-hidden="true">
+              ·
+            </span>
+            <span>{post.minutes} 分钟阅读</span>
+            {post.draft ? <span className="badge">示例文章</span> : null}
+          </div>
+        </div>
+
+        <Toc headings={toc} />
+
+        <div className="post-body">
+          {/* 正文来自本仓库的 blogs/*.md，是可信内容 */}
+          <div className="prose prose-md" dangerouslySetInnerHTML={{ __html: html }} />
+
+          <ul className="chips chips-tight">
+            {post.tags.map((tag) => (
+              <li key={tag} className="chip chip-sm">
+                {tag}
+              </li>
+            ))}
+          </ul>
+
+          <Link className="back back-bottom" href="/#blog">
+            看其它文章 →
+          </Link>
+        </div>
       </div>
-
-      <Toc headings={toc} />
-
-      {/* 正文来自本仓库的 blogs/*.md，是可信内容 */}
-      <div className="prose prose-md" dangerouslySetInnerHTML={{ __html: html }} />
-
-      <ul className="chips chips-tight">
-        {post.tags.map((tag) => (
-          <li key={tag} className="chip chip-sm">
-            {tag}
-          </li>
-        ))}
-      </ul>
-
-      <Link className="back back-bottom" href="/#blog">
-        看其它文章 →
-      </Link>
     </article>
   )
 }

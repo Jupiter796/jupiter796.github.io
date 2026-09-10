@@ -23,6 +23,9 @@
   --radius-lg: 18px;
   --maxw: 820px;
   --topbar-h: 60px;
+  /* 文章页比首页宽：多出来的那一列留给右侧大纲 */
+  --post-maxw: 1060px;
+  --toc-w: 212px;
 
   color-scheme: dark;
   font-family: system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC',
@@ -548,50 +551,54 @@ ul {
 }
 
 /* ------------------------------------------------------------------
-   文章目录
+   文章大纲
    ------------------------------------------------------------------ */
 
+/* 窄屏：head → toc → content 依次堆叠；宽屏把 toc 拎到右列，见下面的媒体查询 */
+.post-main {
+  display: grid;
+  grid-template-areas:
+    'head'
+    'toc'
+    'content';
+  grid-template-columns: minmax(0, 1fr);
+  gap: 26px 0;
+}
+
+.post-head {
+  grid-area: head;
+}
+
+.post-body {
+  grid-area: content;
+}
+
+.main-post {
+  max-width: var(--post-maxw);
+}
+
 .toc {
-  margin: 0 0 34px;
-  padding: 14px 18px;
+  grid-area: toc;
+  position: relative;
+  padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--panel);
+  /* 目录再长也不把正文顶下去，自己滚 */
+  max-height: 46vh;
+  overflow-y: auto;
 }
 
 .toc-title {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  margin: 0;
-  font-size: 0.74rem;
+  margin: 0 0 10px;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted-dim);
-  cursor: pointer;
-  list-style: none;
-}
-
-/* 去掉浏览器自带的三角，换成自己的 */
-.toc-title::-webkit-details-marker {
-  display: none;
-}
-
-.toc-title::after {
-  content: '▾';
-  margin-left: auto;
-  font-size: 0.9rem;
-  letter-spacing: normal;
-  transition: transform 0.18s;
-}
-
-.toc:not([open]) .toc-title::after {
-  transform: rotate(-90deg);
-}
-
-.toc[open] .toc-title {
-  margin-bottom: 10px;
 }
 
 .toc-count {
@@ -631,6 +638,32 @@ ul {
 .toc-h2 a {
   padding-left: 26px;
   font-size: 0.84rem;
+}
+
+/* 宽屏：大纲钉在右列，跟着正文滚动一直可见 */
+@media (min-width: 1024px) {
+  .post-main {
+    grid-template-areas:
+      'head    toc'
+      'content toc';
+    grid-template-columns: minmax(0, 1fr) var(--toc-w);
+    gap: 28px 40px;
+    align-items: start;
+  }
+
+  .toc {
+    grid-area: toc;
+    position: sticky;
+    top: calc(var(--topbar-h) + 24px);
+    /* 高度撑满视口，目录超长时内部滚动 */
+    max-height: calc(100vh - var(--topbar-h) - 48px);
+  }
+
+  /* 文章页变宽了，顶栏和页脚跟着走，左边才对得齐 */
+  .shell-post .topbar-inner,
+  .shell-post .footer {
+    max-width: var(--post-maxw);
+  }
 }
 
 /* ==================================================================
@@ -791,7 +824,7 @@ ul {
 }
 
 .post-meta-lg {
-  margin: 14px 0 30px;
+  margin: 14px 0 0;
   font-size: 0.84rem;
 }
 

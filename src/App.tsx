@@ -294,7 +294,7 @@ export default function App() {
   }, [pathname])
 
   return (
-    <div className="shell">
+    <div className={activePost ? 'shell shell-post' : 'shell'}>
       <div className="backdrop" aria-hidden="true" />
 
       <header className="topbar">
@@ -324,7 +324,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="main">
+      <main className={activePost ? 'main main-post' : 'main'}>
         {route.name === 'notfound' ? (
           <NotFound title="页面不存在" hint="这个地址没有对应的内容。" />
         ) : route.name === 'post' && !activePost ? (
