@@ -10,9 +10,21 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # 产物输出到 dist/
+npm run dev        # 开发服务器 http://localhost:5173
+npm run build      # 类型检查 + 构建，产物输出到 dist/
 npm run preview    # 本地预览 dist/ 的构建结果
+npm run typecheck  # 只做类型检查，不产出文件
+```
+
+构建产物结构：
+
+```
+dist/
+├── .nojekyll                      # 来自 public/，告诉 Pages 不要走 Jekyll 处理
+├── index.html
+└── assets/
+    ├── index-<hash>.js
+    └── index-<hash>.css
 ```
 
 ### 本机网络环境
@@ -62,76 +74,27 @@ npm install --cache ./.npm-cache
 
 > 这个仓库是**用户主页仓库**（`<用户名>.github.io`），站点挂在域名根路径，所以 `vite.config.ts` 里 `base` 保持默认 `'/'`。**不要**改成 `/jupiter796.github.io/`，否则所有资源 404、页面白屏。
 
----
+### 排错：线上白屏、看不到内容
 
-## 从 Jekyll 迁移过来（已完成）
+最常见的原因是 **Pages 的 Source 被设成了 `Deploy from a branch`**。此时 GitHub 会把仓库里的**原始文件**直接当站点发布，于是在线打开的是一份**源码版 `index.html`**——它引用的是 `/src/main.tsx`，浏览器无法执行 `.tsx`，`#root` 始终为空，页面就是白的（同时仓库源码、`package.json` 等都会暴露在公网）。
 
-本站原本是 Jekyll + [Chirpy](https://github.com/cotes2020/jekyll-theme-chirpy) 主题，迁移已完成：
+自查：构建产物里**本不该存在**的文件如果能公网访问，就说明跑的是分支发布。
 
-- 旧站在 **`backup/jekyll-site`** 分支完整保留（本地 + 远程），要回溯随时 `git checkout backup/jekyll-site`。
-- `main` 上已移除全部 Jekyll / Chirpy 文件：
+```bash
+curl -o /dev/null -w '%{http_code}\n' https://jupiter796.github.io/package.json
+# 200 = 正在跑分支发布（错误状态）；404 = 正常（只发布了 dist/ 的内容）
 
-  | 类别 | 已删除 |
-  |---|---|
-  | 配置 | `_config.yml`、`Gemfile`、`.gitmodules`、根级 `.nojekyll`（`public/.nojekyll` 已接替其作用） |
-  | 内容 | `_data/`、`_posts/`、`_tabs/`、`_plugins/` |
-  | 资源 | `assets/`（含 `assets/lib` submodule → cotes2020/chirpy-static-assets） |
-  | 工具 | `tools/`、`.devcontainer/`（Jekyll 镜像）、`.vscode/`（Jekyll 构建任务） |
-  | CI | `.github/workflows/pages-deploy.yml`（Chirpy 自带的 Jekyll 部署工作流） |
-  | 许可 | `LICENSE`（Chirpy 主题的 MIT，© 2021 Cotes Chung，主题代码已全部移除） |
+curl -o /dev/null -w '%{http_code}\n' https://jupiter796.github.io/dist/index.html
+# 404 = 构建产物没被部署
+```
 
-- 保留了 `.editorconfig`、`.gitattributes`——与框架无关，仍然有用。
-- 想恢复某个被删文件：`git checkout HEAD~1 -- <路径>`（或在 `backup/jekyll-site` 分支上找）。
-
-**还需在 GitHub 上手动做一步**：Settings → Pages → **Source** 选 `GitHub Actions`。这一步不做的话，Actions 即使跑成功也不会发布任何东西。
-
----
-
-## 自定义域名
-
-1. 域名商处加解析：
-   - 根域名：4 条 `A` 记录 → `185.199.108.153` / `185.199.109.153` / `185.199.110.153` / `185.199.111.153`
-   - `www` 或子域：`CNAME` → `jupiter796.github.io`
-2. Settings → Pages → Custom domain 填域名
-3. 等 DNS 生效后勾选 **Enforce HTTPS**
-
----
-
-## 常见问题
+处理：把 Source 改成 `GitHub Actions`，并确保 `.github/workflows/deploy.yml` 已经提交到远端（workflow 不推送上去，Actions 永远不会触发），然后推送一次或到 Actions 页面手动 `Run workflow`。
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
+| 白屏，且能直接访问到源码文件 | Source 是 `Deploy from a branch` | 改成 `GitHub Actions` |
+| push 后线上没动静 | workflow 没提交进仓库，或 Source 不是 Actions | 确认远端存在 `.github/workflows/deploy.yml` |
 | Actions 报 `npm ci` 失败 | 仓库里没有 `package-lock.json` | 本地 `npm install` 后把 lockfile 提交上去 |
-| 页面白屏、控制台资源 404 | `base` 被改成了 `/jupiter796.github.io/` | 改回默认 `'/'` |
-| push 后线上没变化 | Source 还是 `Deploy from a branch` | 改成 `GitHub Actions` |
+| 白屏、控制台资源 404 | `base` 被改成了 `/jupiter796.github.io/` | 改回默认 `'/'` |
 | 刷新子路由 404 | 纯静态托管没有服务端路由 | workflow 里的 `404.html` 兜底已处理 |
-| 想再放些不参与打包的静态文件 | — | 放进 `public/`，会原样复制到 `dist/`，线上路径为 `/文件名` |
-| `deploy` 步骤报 `Deployment request failed ... due to in progress deployment` | 之前有一次 deploy job 被中途取消，Pages 的部署记录卡死了（**与代码无关**） | 见下节「部署卡死怎么解」 |
-
-### 部署卡死怎么解
-
-这是 [actions/deploy-pages#22](https://github.com/actions/deploy-pages/issues/22) 记录的已知问题：deploy job 被取消时，连带的取消请求可能失败，导致 Pages 留下一条永远处于 `in progress` 的部署记录，此后**每次部署都会被它挡住**，重试无效。
-
-报错里会点名卡住的那个 commit，例如：
-
-```
-Deployment request failed for <新commit> due to in progress deployment.
-Please cancel <卡住的commit> first or wait for it to complete.
-```
-
-按顺序尝试：
-
-1. **等一下再重跑**。GitHub 侧的缓解最慢约 1 小时生效。Actions → 选失败的 `Deploy Pages` → **Re-run failed jobs**。
-2. **切换 Source 强制重建部署状态**（最有效）：Settings → Pages → Source 先改成 `Deploy from a branch`（随便选个分支）并 Save，再改回 `GitHub Actions` 并 Save。这会重置 Pages 的部署状态机。之后重新触发一次 workflow。
-3. **用 API 删掉卡死的那条部署**（需要 PAT）：
-   ```bash
-   # 先列出部署，找到报错里那个 commit 对应的 id
-   curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-     "https://api.github.com/repos/Jupiter796/jupiter796.github.io/deployments?per_page=30"
-   # 再删除
-   curl -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" \
-     "https://api.github.com/repos/Jupiter796/jupiter796.github.io/deployments/<id>"
-   ```
-4. 还不行就找 GitHub Support。
-
-**预防**：`.github/workflows/deploy.yml` 里必须是 `cancel-in-progress: false`（GitHub 官方 Pages 模板就是 false）。设成 `true` 会在连续推送时取消正在进行的 deploy，正是卡死的成因——本仓库踩过这个坑，已在 2026-09-10 修正。
+| 想放不参与打包的静态文件 | — | 放进 `public/`，会原样复制到 `dist/`，线上路径为 `/文件名` |
