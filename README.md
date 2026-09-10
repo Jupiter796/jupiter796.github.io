@@ -29,36 +29,70 @@ dist/
     └── index-<hash>.css
 ```
 
-### 改内容只动一个文件
+### 改内容
 
-站点的全部文案——名字、简介、关于我、技能、社交链接、项目、博客文章——都集中在 **`src/content.ts`**，改内容不需要碰任何组件。
+**静态文案**集中在 `src/content.ts`：
 
 ```ts
 profile       // 名字、handle、一句话简介、头像路径、首屏介绍
-socialLinks   // 头部那排外链按钮
+socialLinks   // 头部那排外链按钮（icon: 'github' | 'x' | 'code'）
 about         // 「关于我」正文，一段一个字符串
 skills        // 技能标签
 projects      // 项目卡片
-posts         // 博客文章（标题 / 日期 / 摘要 / tags / body）
+```
+
+**博客文章**每篇一个 Markdown 文件，放在仓库根目录的 `blogs/`：
+
+```markdown
+---
+title: 文章标题
+date: 2026-09-10
+summary: 列表里显示的一句话摘要
+tags: [随笔, 前端]
+draft: true
+---
+
+正文用 Markdown 写，GFM 语法可用（表格、删除线、任务列表等）。
 ```
 
 几个约定：
 
-- `posts` 按 `date` 倒序展示，日期格式固定 `YYYY-MM-DD`。
-- 文章正文是**段落数组**（`body: string[]`），一段一个字符串，不是 Markdown。
-- 项目或文章上带 `placeholder` / `draft: true` 的，界面上会显示「占位 / 示例」角标，提醒你还没换掉；改完内容把这两个字段删掉即可。
+- **文件名就是 URL**：`blogs/hello-world.md` → `/blog/hello-world`。想改地址就重命名文件。
+- 列表按 Front Matter 里的 `date` 倒序排列，格式固定 `YYYY-MM-DD`。
+- Front Matter 只解析最简子集：`key: value`、`key: [a, b]`、`key: true`。
+- **新增文章只需往 `blogs/` 里丢一个 `.md`**，不用改任何代码——`src/posts.ts` 用 `import.meta.glob` 自动收集全部 md。
+- `draft: true` 会在界面上显示「示例」角标，定稿后删掉这一行即可。
+- 项目卡片带 `placeholder: true` 的会显示成虚线占位样式。
 - 换头像：替换 `public/avatar.jpg`（现在是 GitHub 头像，460px）。
 
 ### 目录结构
 
 ```
+blogs/             # 博客文章，一篇一个 .md
 src/
-├── content.ts     # 全部文案（改内容只动这里）
-├── App.tsx        # 页面结构与 hash 路由（首页 / #/blog/<slug>）
+├── content.ts     # 静态文案（改文案动这里）
+├── posts.ts       # 读取 blogs/*.md、解析 Front Matter、Markdown 转 HTML
+├── App.tsx        # 页面结构与路由
 ├── useTheme.ts    # 深浅色主题，写进 <html data-theme>
 ├── index.css      # 全部样式
 └── main.tsx       # 入口
 ```
+
+### 路由（路径里不带 #）
+
+用 History API 做前端路由，地址是干净的路径：
+
+| 地址 | 内容 |
+| --- | --- |
+| `/` | 首页 |
+| `/blog/<slug>` | 文章详情 |
+| 其它 | 404 页 |
+
+纯静态托管没有服务端路由，所以**直接访问 `/blog/xxx` 依赖 `404.html` 兜底**：workflow 会把 `dist/index.html` 复制成 `dist/404.html`，GitHub Pages 对未知路径返回它，React 启动后再按 `location.pathname` 渲染对应文章。**这个复制步骤不能删**，否则刷新文章页会 404。
+
+> 代价是深链接返回的 HTTP 状态码是 404（页面内容正常显示）。这是 GitHub Pages 上做 SPA 的常规办法；如果要真正的 200，只能改回 hash 路由，或换成支持 rewrites 的托管。
+
+Markdown 由 [`marked`](https://marked.js.org/) 在运行时渲染，md 内容属于你自己仓库的可信文件，所以正文用 `dangerouslySetInnerHTML` 直接注入，没有做 HTML 消毒——**不要在文章里贴来路不明的 HTML**。
 
 主题切换是纯前端行为，偏好存在 `localStorage` 的 `jupiter796-theme`；`index.html` 里有一段内联脚本，在首次绘制前就把主题定下来，避免浅色用户先看到一帧深色。
 
