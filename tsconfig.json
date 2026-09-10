@@ -15,7 +15,10 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "paths": {
+      "marked-katex-extension": ["./src/types/marked-katex-extension.d.ts"]
+    }
   },
   "include": ["src"]
 }

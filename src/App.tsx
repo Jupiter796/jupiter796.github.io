@@ -1,4 +1,5 @@
-import { useEffect, useSyncExternalStore } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
+import { BRAND_ICONS } from './brand-icons'
 import {
   about,
   profile,
@@ -7,20 +8,16 @@ import {
   socialLinks,
   type SocialLink,
 } from './content'
-import { findPost, posts, type Post } from './posts'
+import { findPost, formatPostDate, posts } from './posts'
+import { Link, parsePath, useLocationKey } from './router'
 import { useTheme, type Theme } from './useTheme'
+
+// 文章详情里带 marked 和 KaTeX，体积不小，拆成独立 chunk 按需加载
+const PostView = lazy(() => import('./PostView'))
 
 /* ------------------------------------------------------------------ */
 /* 小工具                                                             */
 /* ------------------------------------------------------------------ */
-
-/** '2026-09-10' -> '2026 年 9 月 10 日'；日期缺失时返回空串 */
-function formatDate(iso: string): string {
-  const parts = iso.split('-')
-  if (parts.length !== 3) return ''
-  const [year, month, day] = parts
-  return `${year} 年 ${Number(month)} 月 ${Number(day)} 日`
-}
 
 /** 项目卡片上的语言色点 */
 const LANG_COLORS: Record<string, string> = {
@@ -35,119 +32,26 @@ const LANG_COLORS: Record<string, string> = {
 }
 
 /* ------------------------------------------------------------------ */
-/* 路由（History API，路径里不带 #）                                   */
-/* ------------------------------------------------------------------ */
-// /                 首页
-// /blog/<slug>      文章详情
-// 其它              404
-
-type Route = { name: 'home' } | { name: 'post'; slug: string } | { name: 'notfound' }
-
-function parsePath(pathname: string): Route {
-  const clean = pathname.replace(/\/+$/, '') || '/'
-  if (clean === '/' || clean === '/blog') return { name: 'home' }
-
-  const matched = /^\/blog\/(.+)$/.exec(clean)
-  if (matched) return { name: 'post', slug: decodeURIComponent(matched[1]) }
-
-  return { name: 'notfound' }
-}
-
-/* 极简外部 store：pushState 不会触发 popstate，所以自己通知订阅者 */
-const locationListeners = new Set<() => void>()
-
-function emitLocationChange() {
-  for (const listener of locationListeners) listener()
-}
-
-function subscribeLocation(listener: () => void) {
-  locationListeners.add(listener)
-  window.addEventListener('popstate', listener)
-  return () => {
-    locationListeners.delete(listener)
-    window.removeEventListener('popstate', listener)
-  }
-}
-
-function getLocationKey() {
-  return window.location.pathname + window.location.hash
-}
-
-function navigate(href: string) {
-  if (href === getLocationKey()) return
-  window.history.pushState(null, '', href)
-  emitLocationChange()
-}
-
-function useLocationKey() {
-  return useSyncExternalStore(subscribeLocation, getLocationKey, getLocationKey)
-}
-
-/** 站内链接：左键点击走前端路由，其余情况交给浏览器 */
-function Link({
-  href,
-  className,
-  children,
-  external,
-  title,
-}: {
-  href: string
-  className?: string
-  children: React.ReactNode
-  external?: boolean
-  title?: string
-}) {
-  if (external) {
-    return (
-      <a className={className} href={href} target="_blank" rel="noreferrer" title={title}>
-        {children}
-      </a>
-    )
-  }
-
-  return (
-    <a
-      className={className}
-      href={href}
-      title={title}
-      onClick={(event) => {
-        // 让浏览器处理新标签页、下载、右键菜单等情况
-        if (
-          event.defaultPrevented ||
-          event.button !== 0 ||
-          event.metaKey ||
-          event.ctrlKey ||
-          event.shiftKey ||
-          event.altKey
-        ) {
-          return
-        }
-        event.preventDefault()
-        navigate(href)
-      }}
-    >
-      {children}
-    </a>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /* 图标                                                               */
 /* ------------------------------------------------------------------ */
 
+/** 品牌图标走 simple-icons 的路径；'code' 是站点自用的代码图标 */
 function SocialIcon({ icon }: { icon: SocialLink['icon'] }) {
-  if (icon === 'github') {
+  if (icon === 'code') {
     return (
-      <svg className="icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="currentColor">
-        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-      </svg>
-    )
-  }
-
-  if (icon === 'x') {
-    return (
-      <svg className="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644Z" />
+      <svg
+        className="icon"
+        viewBox="0 0 24 24"
+        width="15"
+        height="15"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m9.6 16.6-4.6-4.6 4.6-4.6M14.4 7.4l4.6 4.6-4.6 4.6" />
       </svg>
     )
   }
@@ -159,13 +63,9 @@ function SocialIcon({ icon }: { icon: SocialLink['icon'] }) {
       width="15"
       height="15"
       aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
     >
-      <path d="m9.6 16.6-4.6-4.6 4.6-4.6M14.4 7.4l4.6 4.6-4.6 4.6" />
+      <path d={BRAND_ICONS[icon]} />
     </svg>
   )
 }
@@ -322,7 +222,7 @@ function BlogSection() {
           <li key={post.slug}>
             <Link className="post-row" href={`/blog/${post.slug}`}>
               <div className="post-meta">
-                <time dateTime={post.date}>{formatDate(post.date)}</time>
+                <time dateTime={post.date}>{formatPostDate(post.date)}</time>
                 <span className="sep" aria-hidden="true">
                   ·
                 </span>
@@ -346,56 +246,6 @@ function BlogSection() {
   )
 }
 
-/* ------------------------------------------------------------------ */
-/* 文章详情                                                           */
-/* ------------------------------------------------------------------ */
-
-function PostView({ post }: { post: Post }) {
-  return (
-    <article className="post">
-      <Link className="back" href="/#blog">
-        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-          <path
-            d="M15 5 8 12l7 7"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        返回列表
-      </Link>
-
-      <h1>{post.title}</h1>
-
-      <div className="post-meta post-meta-lg">
-        <time dateTime={post.date}>{formatDate(post.date)}</time>
-        <span className="sep" aria-hidden="true">
-          ·
-        </span>
-        <span>{post.minutes} 分钟阅读</span>
-        {post.draft ? <span className="badge">示例文章</span> : null}
-      </div>
-
-      {/* 正文来自本仓库的 blogs/*.md，是可信内容 */}
-      <div className="prose prose-md" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
-
-      <ul className="chips chips-tight">
-        {post.tags.map((tag) => (
-          <Chip key={tag} small>
-            {tag}
-          </Chip>
-        ))}
-      </ul>
-
-      <Link className="back back-bottom" href="/#blog">
-        看其它文章 →
-      </Link>
-    </article>
-  )
-}
-
 function NotFound({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="notfound">
@@ -414,10 +264,12 @@ function NotFound({ title, hint }: { title: string; hint: string }) {
 /* ------------------------------------------------------------------ */
 
 export default function App() {
-  const locationKey = useLocationKey()
+  // 订阅 location 变化以触发重渲染；当前值下面直接读 window.location
+  useLocationKey()
   const { theme, toggleTheme } = useTheme()
 
-  const route = parsePath(window.location.pathname)
+  const pathname = window.location.pathname
+  const route = parsePath(pathname)
   const activePost = route.name === 'post' ? findPost(route.slug) : undefined
 
   // 标题跟着路由走
@@ -427,7 +279,8 @@ export default function App() {
       : `${profile.name} · ${profile.tagline}`
   }, [activePost])
 
-  // 换页后：有锚点就滚到锚点，否则回到顶部
+  // 只在「页面」变化时重置滚动位置。
+  // 单纯改 hash（点文章目录的锚点）交给浏览器，否则点完锚点按返回键会被拉回顶部。
   useEffect(() => {
     const hash = window.location.hash
     if (hash) {
@@ -438,7 +291,7 @@ export default function App() {
       }
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [locationKey])
+  }, [pathname])
 
   return (
     <div className="shell">
@@ -477,7 +330,9 @@ export default function App() {
         ) : route.name === 'post' && !activePost ? (
           <NotFound title="没有这篇文章" hint="链接可能过期了，或者 slug 写错了。" />
         ) : activePost ? (
-          <PostView post={activePost} />
+          <Suspense fallback={<p className="loading">正在加载文章…</p>}>
+            <PostView post={activePost} />
+          </Suspense>
         ) : (
           <>
             <Hero />

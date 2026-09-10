@@ -35,11 +35,14 @@ dist/
 
 ```ts
 profile       // 名字、handle、一句话简介、头像路径、首屏介绍
-socialLinks   // 头部那排外链按钮（icon: 'github' | 'x' | 'code'）
+socialLinks   // 头部那排外链按钮（icon 见下）
 about         // 「关于我」正文，一段一个字符串
 skills        // 技能标签
 projects      // 项目卡片
 ```
+
+`socialLinks[].icon` 可选：`'github' | 'x' | 'bilibili' | 'instagram' | 'telegram' | 'code'`。
+图标路径在 `src/brand-icons.ts`（取自 simple-icons，24×24），想加新平台就往那个文件里补一条。
 
 **博客文章**每篇一个 Markdown 文件，放在仓库根目录的 `blogs/`：
 
@@ -57,7 +60,7 @@ draft: true
 
 几个约定：
 
-- **文件名就是 URL**：`blogs/hello-world.md` → `/blog/hello-world`。想改地址就重命名文件。
+- **文件名就是 URL**：`blogs/hello-world.md` → `/blog/hello-world`。想改地址就重命名文件（注意大小写会原样带进 URL，`CED.md` 就是 `/blog/CED`）。
 - 列表按 Front Matter 里的 `date` 倒序排列，格式固定 `YYYY-MM-DD`。
 - Front Matter 只解析最简子集：`key: value`、`key: [a, b]`、`key: true`。
 - **新增文章只需往 `blogs/` 里丢一个 `.md`**，不用改任何代码——`src/posts.ts` 用 `import.meta.glob` 自动收集全部 md。
@@ -65,18 +68,49 @@ draft: true
 - 项目卡片带 `placeholder: true` 的会显示成虚线占位样式。
 - 换头像：替换 `public/avatar.jpg`（现在是 GitHub 头像，460px）。
 
+### 文章大纲与数学公式
+
+**大纲**由正文标题自动生成：取「最浅的那一级 + 它下面一级」，所以既支持从 `##` 写起的文章，也支持拿 `#` 当大节的论文笔记。点标题跳转，滚动时高亮当前小节；节数超过 12 条默认折叠。
+
+**数学公式**用 [KaTeX](https://katex.org/) 渲染：
+
+| 写法 | 效果 |
+| --- | --- |
+| `$E = mc^2$` | 行内公式 |
+| `$$` 单独占行的 | 块级公式（居中） |
+
+注意两点：
+
+- 出于中文排版考虑开了**宽松匹配**：`$` 前后不加空格也算公式，所以「公式$E=mc^2$」贴着中文写没问题。**代价是正文里要显示美元符号得转义成 `\$`**（反引号里的代码片段不受影响）。
+- LaTeX 只有被 `$` 或 `$$` 包起来才会渲染。像 `\boxed{...}` 这样漏了 `$` 的会**原样当文本显示**。
+
 ### 目录结构
 
 ```
 blogs/             # 博客文章，一篇一个 .md
 src/
 ├── content.ts     # 静态文案（改文案动这里）
-├── posts.ts       # 读取 blogs/*.md、解析 Front Matter、Markdown 转 HTML
-├── App.tsx        # 页面结构与路由
+├── posts.ts       # 读取 blogs/*.md、解析 Front Matter（轻量，进主包）
+├── PostView.tsx   # 文章详情：marked + KaTeX，抽目录，**懒加载**
+├── router.tsx     # History API 路由 + <Link>
+├── brand-icons.ts # 社交图标路径
+├── types/         # 类型补丁（见下）
+├── App.tsx        # 页面结构
 ├── useTheme.ts    # 深浅色主题，写进 <html data-theme>
 ├── index.css      # 全部样式
 └── main.tsx       # 入口
 ```
+
+文章详情被拆成独立 chunk（`lazy()` + `Suspense`），因为 marked + KaTeX 加起来有 300KB 左右：
+
+| | 首页 | 打开文章再加载 |
+| --- | --- | --- |
+| JS | ~89 KB (gzip) | +92 KB |
+| CSS | ~3 KB (gzip) | +8 KB |
+
+也就是说**首页访客不会为了数学公式白白多下载近百 KB**。KaTeX 的字体有 59 个文件，但浏览器只按需取用到的字形。
+
+`src/types/marked-katex-extension.d.ts` 是个类型补丁：那个包把 `types` 指向了未编译的 `src/index.ts`，`tsc` 会连带检查它自己的源码并撞上本项目的 `noUnusedParameters`（`skipLibCheck` 对 `.ts` 源码无效）。上游补上 `.d.ts` 后，这个文件和 `tsconfig.json` 里对应的 `paths` 就可以删掉。
 
 ### 路由（路径里不带 #）
 

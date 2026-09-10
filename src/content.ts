@@ -13,7 +13,7 @@ export type SocialLink = {
   /** 鼠标悬停提示 */
   hint: string
   /** 图标，对应 App.tsx 里的 SocialIcon */
-  icon: 'github' | 'x' | 'code'
+  icon: 'github' | 'x' | 'bilibili' | 'instagram' | 'telegram' | 'code'
 }
 
 export type Project = {
@@ -43,7 +43,12 @@ export const profile = {
   intro: '把复杂的问题拆成简单的部分，再一个一个解决。',
 }
 
-/** 外链按钮。改地址、换图标或加一个都行 */
+/**
+ * 外链按钮。改地址、换图标或加一个都行。
+ *
+ * TODO：哔哩哔哩 / Instagram / Telegram 三条是**占位用的 mock 地址**，
+ * 换成你自己的主页，或者把整条删掉。
+ */
 export const socialLinks: SocialLink[] = [
   {
     label: 'GitHub',
@@ -62,6 +67,24 @@ export const socialLinks: SocialLink[] = [
     href: 'https://x.com/XinZhang423298',
     hint: '@XinZhang423298',
     icon: 'x',
+  },
+  {
+    label: '哔哩哔哩',
+    href: 'https://space.bilibili.com/000000000',
+    hint: 'B 站主页（占位地址，待替换）',
+    icon: 'bilibili',
+  },
+  {
+    label: 'Instagram',
+    href: 'https://www.instagram.com/jupiter796/',
+    hint: '@jupiter796（占位地址，待替换）',
+    icon: 'instagram',
+  },
+  {
+    label: 'Telegram',
+    href: 'https://t.me/jupiter796',
+    hint: '@jupiter796（占位地址，待替换）',
+    icon: 'telegram',
   },
 ]
 

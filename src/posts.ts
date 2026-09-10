@@ -1,11 +1,11 @@
-import { marked } from 'marked'
-
 /**
- * 文章正文写在仓库根目录的 blogs/ 里，一个 .md 一个文件。
- * 这里负责在**构建时**把它们的原文读进来，解析 Front Matter 并转成 HTML。
+ * 文章元信息。
  *
- * 注意：md 是你自己仓库里的文件，属于可信内容，所以直接用
- * dangerouslySetInnerHTML 渲染，没有做 HTML 消毒。
+ * 正文写在仓库根目录的 blogs/ 里，一个 .md 一个文件。这里只做两件轻量的事：
+ * 把原文读进来、解析 Front Matter 抽元信息。
+ *
+ * **Markdown / 公式的渲染不在这里** —— 那部分会引入 marked 和 KaTeX（体积不小），
+ * 放在 src/PostView.tsx 里按需加载，这样首页访客不必下载数学公式渲染器。
  */
 
 export type Post = {
@@ -17,10 +17,10 @@ export type Post = {
   tags: string[]
   /** 示例文章，界面上会显示「示例」角标 */
   draft: boolean
-  /** 已渲染的正文 HTML */
-  bodyHtml: string
   /** 预估阅读时长（分钟） */
   minutes: number
+  /** Markdown 原文，交给 PostView 渲染 */
+  markdown: string
 }
 
 type FrontMatterValue = string | string[] | boolean
@@ -63,14 +63,19 @@ function parseFrontMatter(raw: string): { data: Record<string, FrontMatterValue>
   return { data, content: raw.slice(matched[0].length) }
 }
 
-/** 中文大约 300 字/分钟，代码块不计入 */
+/** 中文大约 300 字/分钟，代码块和块级公式不计入 */
 function estimateMinutes(markdown: string): number {
-  const prose = markdown.replace(/```[\s\S]*?```/g, '')
+  const prose = markdown.replace(/```[\s\S]*?```/g, '').replace(/\$\$[\s\S]*?\$\$/g, '')
   const chars = prose.replace(/\s/g, '').length
   return Math.max(1, Math.round(chars / 300))
 }
 
-marked.setOptions({ gfm: true, breaks: false })
+/** '2026-09-10' -> '2026 年 9 月 10 日'；格式不对时返回空串 */
+export function formatPostDate(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return ''
+  return `${parts[0]} 年 ${Number(parts[1])} 月 ${Number(parts[2])} 日`
+}
 
 // eager + ?raw：构建时就把每个 md 的原文内联进来，运行时不发请求
 const files = import.meta.glob('../blogs/*.md', {
@@ -92,8 +97,8 @@ export const posts: Post[] = Object.entries(files)
       summary: typeof data.summary === 'string' ? data.summary : '',
       tags: Array.isArray(data.tags) ? data.tags : [],
       draft: data.draft === true,
-      bodyHtml: marked.parse(content) as string,
       minutes: estimateMinutes(content),
+      markdown: content,
     }
   })
   .sort((a, b) => b.date.localeCompare(a.date))

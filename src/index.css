@@ -528,6 +528,111 @@ ul {
   color: var(--muted);
 }
 
+/* 锚点跳转时给吸顶栏留出空间 */
+.prose-md h2,
+.prose-md h3,
+.prose-md h4 {
+  scroll-margin-top: calc(var(--topbar-h) + 20px);
+}
+
+/* KaTeX：长公式横向滚动，别撑破布局 */
+.prose-md .katex-display {
+  margin: 22px 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.prose-md .katex {
+  font-size: 1.04em;
+}
+
+/* ------------------------------------------------------------------
+   文章目录
+   ------------------------------------------------------------------ */
+
+.toc {
+  margin: 0 0 34px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.toc-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+  cursor: pointer;
+  list-style: none;
+}
+
+/* 去掉浏览器自带的三角，换成自己的 */
+.toc-title::-webkit-details-marker {
+  display: none;
+}
+
+.toc-title::after {
+  content: '▾';
+  margin-left: auto;
+  font-size: 0.9rem;
+  letter-spacing: normal;
+  transition: transform 0.18s;
+}
+
+.toc:not([open]) .toc-title::after {
+  transform: rotate(-90deg);
+}
+
+.toc[open] .toc-title {
+  margin-bottom: 10px;
+}
+
+.toc-count {
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.toc-item a {
+  display: block;
+  padding: 5px 10px;
+  border-left: 2px solid var(--border);
+  font-size: 0.87rem;
+  line-height: 1.5;
+  color: var(--muted);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.toc-item a:hover {
+  color: var(--text-strong);
+  border-left-color: var(--border-strong);
+}
+
+.toc-item a.is-active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+/* 层级在 PostView 里已经归一化成 1/2 两级 */
+.toc-h2 a {
+  padding-left: 26px;
+  font-size: 0.84rem;
+}
+
 /* ==================================================================
    标签
    ================================================================== */
@@ -760,6 +865,13 @@ ul {
 
 .notfound .back {
   margin-top: 22px;
+}
+
+/* 文章 chunk 加载中的占位 */
+.loading {
+  margin: 40px 0;
+  font-size: 0.9rem;
+  color: var(--muted-dim);
 }
 
 /* ==================================================================
