@@ -3,11 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jupiter796</title>
-    <meta name="description" content="Jupiter796 的个人主页" />
+    <title>クローバー · Just be simple</title>
+    <meta name="description" content="クローバー（Jupiter796）的个人主页 —— Just be simple。" />
+    <meta name="author" content="クローバー" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0a0b10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
+
+    <!--
+      在首次绘制之前把主题定下来，避免浅色用户先看到一帧深色背景。
+      逻辑与 src/useTheme.ts 保持一致。
+    -->
+    <script>
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('jupiter796-theme')
+          var theme =
+            saved === 'dark' || saved === 'light'
+              ? saved
+              : window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark'
+          document.documentElement.dataset.theme = theme
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <p style="padding: 24px; font-family: system-ui, sans-serif">
+        这个页面由 React 渲染，需要开启 JavaScript 才能查看。
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

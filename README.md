@@ -21,11 +21,46 @@ npm run typecheck  # 只做类型检查，不产出文件
 ```
 dist/
 ├── .nojekyll                      # 来自 public/，告诉 Pages 不要走 Jekyll 处理
+├── avatar.jpg                     # 头像，来自 public/
+├── favicon.svg                    # 站标，来自 public/
 ├── index.html
 └── assets/
     ├── index-<hash>.js
     └── index-<hash>.css
 ```
+
+### 改内容只动一个文件
+
+站点的全部文案——名字、简介、关于我、技能、社交链接、项目、博客文章——都集中在 **`src/content.ts`**，改内容不需要碰任何组件。
+
+```ts
+profile       // 名字、handle、一句话简介、头像路径、首屏介绍
+socialLinks   // 头部那排外链按钮
+about         // 「关于我」正文，一段一个字符串
+skills        // 技能标签
+projects      // 项目卡片
+posts         // 博客文章（标题 / 日期 / 摘要 / tags / body）
+```
+
+几个约定：
+
+- `posts` 按 `date` 倒序展示，日期格式固定 `YYYY-MM-DD`。
+- 文章正文是**段落数组**（`body: string[]`），一段一个字符串，不是 Markdown。
+- 项目或文章上带 `placeholder` / `draft: true` 的，界面上会显示「占位 / 示例」角标，提醒你还没换掉；改完内容把这两个字段删掉即可。
+- 换头像：替换 `public/avatar.jpg`（现在是 GitHub 头像，460px）。
+
+### 目录结构
+
+```
+src/
+├── content.ts     # 全部文案（改内容只动这里）
+├── App.tsx        # 页面结构与 hash 路由（首页 / #/blog/<slug>）
+├── useTheme.ts    # 深浅色主题，写进 <html data-theme>
+├── index.css      # 全部样式
+└── main.tsx       # 入口
+```
+
+主题切换是纯前端行为，偏好存在 `localStorage` 的 `jupiter796-theme`；`index.html` 里有一段内联脚本，在首次绘制前就把主题定下来，避免浅色用户先看到一帧深色。
 
 ### 本机网络环境
 
