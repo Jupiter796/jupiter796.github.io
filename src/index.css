@@ -581,6 +581,7 @@ ul {
   grid-area: toc;
   position: relative;
   padding: 14px 16px;
+  width: 300px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--panel);

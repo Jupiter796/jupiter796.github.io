@@ -57,19 +57,13 @@ export const socialLinks: SocialLink[] = [
     icon: 'github',
   },
   {
-    label: '本站源码',
-    href: 'https://github.com/Jupiter796/jupiter796.github.io',
-    hint: '这个站点的源代码',
-    icon: 'code',
-  },
-  {
-    label: 'X / Twitter',
+    label: 'X',
     href: 'https://x.com/XinZhang423298',
     hint: '@XinZhang423298',
     icon: 'x',
   },
   {
-    label: '哔哩哔哩',
+    label: 'bilibili',
     href: 'https://space.bilibili.com/000000000',
     hint: 'B 站主页（占位地址，待替换）',
     icon: 'bilibili',
@@ -86,12 +80,18 @@ export const socialLinks: SocialLink[] = [
     hint: '@jupiter796（占位地址，待替换）',
     icon: 'telegram',
   },
+    {
+    label: '本站源码',
+    href: 'https://github.com/Jupiter796/jupiter796.github.io',
+    hint: 'source code of this site',
+    icon: 'code',
+  }
 ]
 
 /** 「关于我」正文，一段一个字符串，加段落直接往数组里塞 */
 export const about: string[] = [
   '我是 クローバー，GitHub 上的 Jupiter796。座右铭是「Just be simple」——先把复杂的问题拆成足够小的部分，再一个一个解决。',
-  '这个站点是我的个人主页，同时也是我的试验田：用 React 19 + Vite + TypeScript 从零手写，push 之后由 GitHub Actions 自动构建并发布到 GitHub Pages。没有后端、没有数据库，纯静态。',
+  '这个站点是我的个人主页，同时也是我的试验田：用 React 19 + Vite + TypeScript 从零??，push 之后由 GitHub Actions 自动构建并发布到 GitHub Pages。没有后端、没有数据库，纯静态。',
   '平时主要写 TypeScript 和 React，也会用 Node.js 写点小工具。想聊点什么，从上面的链接找我就行。',
 ]
 
