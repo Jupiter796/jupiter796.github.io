@@ -1,6 +1,6 @@
 ---
 title: 这个博客支持哪些排版
-date: 2026-09-11
+date: 2026-08-29
 summary: Markdown 语法速查，以及 LaTeX 数学公式怎么写——行内、块级、还有美元符号的转义坑。
 tags: [Markdown, LaTeX, 使用说明]
 draft: true

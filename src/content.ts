@@ -36,11 +36,11 @@ export const profile = {
   name: 'クローバー',
   handle: 'Jupiter796',
   /** 一句话简介，来自你 GitHub 的 bio */
-  tagline: 'Just be simple',
+  tagline: 'Dum spiro, spero.',
   avatar: '/avatar.jpg',
   avatarAlt: 'クローバー 的头像',
   /** 首屏那句稍长一点的自我介绍 */
-  intro: '把复杂的问题拆成简单的部分，再一个一个解决。',
+  intro: '你我之间，不过是一段不长不短的缘分',
 }
 
 /**
@@ -64,20 +64,20 @@ export const socialLinks: SocialLink[] = [
   },
   {
     label: 'bilibili',
-    href: 'https://space.bilibili.com/000000000',
-    hint: 'B 站主页（占位地址，待替换）',
+    href: 'https://space.bilibili.com/652444279',
+    hint: 'bilibili home page',
     icon: 'bilibili',
   },
   {
     label: 'Instagram',
-    href: 'https://www.instagram.com/jupiter796/',
-    hint: '@jupiter796（占位地址，待替换）',
+    href: 'https://www.instagram.com/zx62462025',
+    hint: 'ins home page',
     icon: 'instagram',
   },
   {
     label: 'Telegram',
-    href: 'https://t.me/jupiter796',
-    hint: '@jupiter796（占位地址，待替换）',
+    href: 'https://t.me/jupiter486',
+    hint: '@jupiter486',
     icon: 'telegram',
   },
     {
@@ -90,7 +90,7 @@ export const socialLinks: SocialLink[] = [
 
 /** 「关于我」正文，一段一个字符串，加段落直接往数组里塞 */
 export const about: string[] = [
-  '我是 クローバー，GitHub 上的 Jupiter796。座右铭是「Just be simple」——先把复杂的问题拆成足够小的部分，再一个一个解决。',
+  '我是 クローバー，GitHub 上的 Jupiter796。',
   '这个站点是我的个人主页，同时也是我的试验田：用 React 19 + Vite + TypeScript 从零??，push 之后由 GitHub Actions 自动构建并发布到 GitHub Pages。没有后端、没有数据库，纯静态。',
   '平时主要写 TypeScript 和 React，也会用 Node.js 写点小工具。想聊点什么，从上面的链接找我就行。',
 ]
@@ -100,10 +100,10 @@ export const skills: string[] = [
   'TypeScript',
   'React',
   'Vite',
-  'Node.js',
-  'CSS',
-  'Git',
-  'GitHub Actions',
+  'Python',
+  'Java',
+  'Graph',
+  'LLM',
 ]
 
 /* ------------------------------------------------------------------ */

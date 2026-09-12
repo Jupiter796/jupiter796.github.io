@@ -1,6 +1,6 @@
 ---
 title: GitHub Pages 用 Actions 部署踩过的坑
-date: 2026-09-05
+date: 2026-08-29
 summary: Source 必须选 GitHub Actions，vite 的 base 不能乱改，concurrency 千万别设成 true。
 tags: [CI/CD, GitHub Pages]
 draft: true

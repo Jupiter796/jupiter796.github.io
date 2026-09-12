@@ -1,6 +1,6 @@
 ---
 title: 把站点从 Jekyll 换成了 Vite
-date: 2026-09-08
+date: 2026-08-29
 summary: 原来的 Jekyll + Chirpy 主题其实够用，但我更想要一个能随手写 React 的地方。
 tags: [前端, Vite]
 draft: true
