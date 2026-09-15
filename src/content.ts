@@ -40,7 +40,7 @@ export const profile = {
   avatar: '/avatar.jpg',
   avatarAlt: 'クローバー 的头像',
   /** 首屏那句稍长一点的自我介绍 */
-  intro: '你我之间，不过是一段不长不短的缘分',
+  intro: '风遇山止，船到岸停',
 }
 
 /**

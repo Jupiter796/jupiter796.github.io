@@ -91,8 +91,8 @@ const NAV_ITEMS = [
   { href: '/#about', label: '关于' },
   { href: '/#projects', label: '项目' },
   { href: '/#blog', label: '博客' },
-  { href: '/romance', label: '浪漫' },
-  { href: '/flowers', label: '鲜花' },
+  //{ href: '/romance', label: '浪漫' },
+  //{ href: '/flowers', label: '鲜花' },
 ]
 
 function SectionHeading({ index, title, note }: { index: string; title: string; note?: string }) {
