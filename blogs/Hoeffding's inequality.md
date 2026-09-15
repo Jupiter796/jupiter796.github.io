@@ -4,6 +4,8 @@ date: 2026-09-06
 summary: 记录一下概率论中霍夫丁不等式的学习。
 tags: [随笔]
 draft: false
+# 外链封面：不影响仓库体积，但图挂了会回退成渐变占位（见 src/posts.ts 的 resolveCover）
+cover: https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1600&h=900&fit=crop
 ---
 
 **霍夫丁不等式（Hoeffding's inequality）是机器学习的基础理论，通过它可以推导出机器学习在理论上的可行性。**

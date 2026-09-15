@@ -3,6 +3,7 @@ import { Marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
 // KaTeX 的样式（含字体）只在这个 chunk 里加载，首页访客不必下载
 import 'katex/dist/katex.min.css'
+import { Cover } from './Cover'
 import { formatPostDate, type Post } from './posts'
 import { Link } from './router'
 
@@ -216,6 +217,8 @@ export default function PostView({ post }: { post: Post }) {
             {post.draft ? <span className="badge">示例文章</span> : null}
           </div>
         </div>
+
+        <Cover src={post.cover} alt={post.coverAlt} />
 
         <Toc headings={toc} />
 

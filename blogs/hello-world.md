@@ -4,6 +4,7 @@ date: 2026-08-28
 summary: 开通这个博客的第一篇：在满地都是写作平台的今天，为什么还要自己搭一个站。
 tags: [随笔]
 draft: true
+cover: /covers/hello-world.svg
 ---
 
 这是这个博客的第一篇。

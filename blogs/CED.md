@@ -4,6 +4,7 @@ date: 2026-09-05
 summary: 《Continuous Edit Distance for Time-varying Persistence Diagrams》论文阅读
 tags: [Academic, Persistence Diagram, Edit Distance, Geodesic, Barycenter]
 draft: false
+cover: /covers/CED.svg
 ---
 
 

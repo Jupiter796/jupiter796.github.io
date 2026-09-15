@@ -4,6 +4,7 @@ date: 2026-08-29
 summary: Markdown 语法速查，以及 LaTeX 数学公式怎么写——行内、块级、还有美元符号的转义坑。
 tags: [Markdown, LaTeX, 使用说明]
 draft: true
+cover: /covers/markdown-guide.svg
 ---
 
 这篇文章既是排版速查，也是这个站点的功能自测。写它是因为：**公式这块有个不直观的坑**，值得单独记一笔。

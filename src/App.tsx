@@ -1,19 +1,17 @@
 import { lazy, Suspense, useEffect } from 'react'
+import { AboutSection } from './AboutSection'
 import { BRAND_ICONS } from './brand-icons'
-import {
-  about,
-  profile,
-  projects,
-  skills,
-  socialLinks,
-  type SocialLink,
-} from './content'
+import { Cover } from './Cover'
+import { profile, projects, socialLinks, type SocialLink } from './content'
 import { findPost, formatPostDate, posts } from './posts'
 import { Link, parsePath, useLocationKey } from './router'
 import { useTheme, type Theme } from './useTheme'
 
 // 文章详情里带 marked 和 KaTeX，体积不小，拆成独立 chunk 按需加载
 const PostView = lazy(() => import('./PostView'))
+// 浪漫页、鲜花页同理：星空 / 花束的 canvas 只有访客真的点进去才需要
+const RomancePage = lazy(() => import('./Romance'))
+const FlowersPage = lazy(() => import('./Flowers'))
 
 /* ------------------------------------------------------------------ */
 /* 小工具                                                             */
@@ -93,6 +91,8 @@ const NAV_ITEMS = [
   { href: '/#about', label: '关于' },
   { href: '/#projects', label: '项目' },
   { href: '/#blog', label: '博客' },
+  { href: '/romance', label: '浪漫' },
+  { href: '/flowers', label: '鲜花' },
 ]
 
 function SectionHeading({ index, title, note }: { index: string; title: string; note?: string }) {
@@ -152,25 +152,8 @@ function Hero() {
 /* 各区块                                                             */
 /* ------------------------------------------------------------------ */
 
-function AboutSection() {
-  return (
-    <section id="about" className="section">
-      <SectionHeading index="01" title="关于我" />
-      <div className="prose">
-        {about.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-      </div>
-
-      <h3 className="subhead">常用技术</h3>
-      <ul className="chips">
-        {skills.map((skill) => (
-          <Chip key={skill}>{skill}</Chip>
-        ))}
-      </ul>
-    </section>
-  )
-}
+/* AboutSection 已抽到 src/AboutSection.tsx —— 首页和鲜花页共用同一份，
+   所以这里不再重复定义。下面两个区块只有首页用。 */
 
 function ProjectsSection() {
   return (
@@ -221,23 +204,27 @@ function BlogSection() {
         {posts.map((post) => (
           <li key={post.slug}>
             <Link className="post-row" href={`/blog/${post.slug}`}>
-              <div className="post-meta">
-                <time dateTime={post.date}>{formatPostDate(post.date)}</time>
-                <span className="sep" aria-hidden="true">
-                  ·
-                </span>
-                <span>{post.minutes} 分钟</span>
-                {post.draft ? <span className="badge">示例</span> : null}
+              <Cover src={post.cover} alt={post.coverAlt} />
+
+              <div className="post-row-body">
+                <div className="post-meta">
+                  <time dateTime={post.date}>{formatPostDate(post.date)}</time>
+                  <span className="sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span>{post.minutes} 分钟</span>
+                  {post.draft ? <span className="badge">示例</span> : null}
+                </div>
+                <h3>{post.title}</h3>
+                <p className="post-summary">{post.summary}</p>
+                <ul className="chips chips-tight">
+                  {post.tags.map((tag) => (
+                    <Chip key={tag} small>
+                      {tag}
+                    </Chip>
+                  ))}
+                </ul>
               </div>
-              <h3>{post.title}</h3>
-              <p className="post-summary">{post.summary}</p>
-              <ul className="chips chips-tight">
-                {post.tags.map((tag) => (
-                  <Chip key={tag} small>
-                    {tag}
-                  </Chip>
-                ))}
-              </ul>
             </Link>
           </li>
         ))}
@@ -271,13 +258,24 @@ export default function App() {
   const pathname = window.location.pathname
   const route = parsePath(pathname)
   const activePost = route.name === 'post' ? findPost(route.slug) : undefined
+  // 浪漫页 / 鲜花页自带顶栏、页脚和整套配色，各自走独立的渲染分支
+  const isRomance = route.name === 'romance'
+  const isFlowers = route.name === 'flowers'
 
   // 标题跟着路由走
   useEffect(() => {
+    if (isRomance) {
+      document.title = `星光收集处 · ${profile.name}`
+      return
+    }
+    if (isFlowers) {
+      document.title = `一束电子鲜花 · ${profile.name}`
+      return
+    }
     document.title = activePost
       ? `${activePost.title} · ${profile.name}`
       : `${profile.name} · ${profile.tagline}`
-  }, [activePost])
+  }, [activePost, isRomance, isFlowers])
 
   // 只在「页面」变化时重置滚动位置。
   // 单纯改 hash（点文章目录的锚点）交给浏览器，否则点完锚点按返回键会被拉回顶部。
@@ -292,6 +290,24 @@ export default function App() {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [pathname])
+
+  if (isRomance) {
+    return (
+      <div className="romance-theme" data-ro-theme={theme === 'light' ? 'dawn' : 'night'}>
+        <Suspense fallback={<p className="loading loading-romance">正在点亮星空…</p>}>
+          <RomancePage />
+        </Suspense>
+      </div>
+    )
+  }
+
+  if (isFlowers) {
+    return (
+      <Suspense fallback={<p className="loading loading-romance">正在种花…</p>}>
+        <FlowersPage />
+      </Suspense>
+    )
+  }
 
   return (
     <div className={activePost ? 'shell shell-post' : 'shell'}>

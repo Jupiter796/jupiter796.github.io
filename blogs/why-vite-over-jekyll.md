@@ -4,6 +4,7 @@ date: 2026-08-29
 summary: 原来的 Jekyll + Chirpy 主题其实够用，但我更想要一个能随手写 React 的地方。
 tags: [前端, Vite]
 draft: true
+cover: /covers/why-vite-over-jekyll.svg
 ---
 
 这个站最早是 Jekyll + [Chirpy](https://github.com/cotes2020/jekyll-theme-chirpy) 主题搭的，用了挺长时间，其实一直够用。换掉它不是因为不能用，而是因为**心智负担**。

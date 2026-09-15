@@ -5,16 +5,32 @@ import { useSyncExternalStore } from 'react'
  *
  *   /                首页
  *   /blog/<slug>     文章详情
+ *   /romance         浪漫页
+ *   /flowers         电子鲜花页
  *   其它             404
  *
  * 单独成文件是因为文章详情是懒加载的独立 chunk，它和 App 都要用 Link。
  */
 
-export type Route = { name: 'home' } | { name: 'post'; slug: string } | { name: 'notfound' }
+export type Route =
+  | { name: 'home' }
+  | { name: 'post'; slug: string }
+  | { name: 'romance' }
+  | { name: 'flowers' }
+  | { name: 'notfound' }
+
+/** 路径 -> 页面名。这几个「个人页面」都自带顶栏/页脚，走独立的渲染分支 */
+const STANDALONE: Record<string, 'romance' | 'flowers'> = {
+  '/romance': 'romance',
+  '/flowers': 'flowers',
+}
 
 export function parsePath(pathname: string): Route {
   const clean = pathname.replace(/\/+$/, '') || '/'
   if (clean === '/' || clean === '/blog') return { name: 'home' }
+
+  const standalone = STANDALONE[clean]
+  if (standalone) return { name: standalone }
 
   const matched = /^\/blog\/(.+)$/.exec(clean)
   if (matched) return { name: 'post', slug: decodeURIComponent(matched[1]) }

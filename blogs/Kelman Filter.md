@@ -4,6 +4,7 @@ date: 2026-09-01
 summary: 记录一下卡尔曼滤波的学习。
 tags: [随笔]
 draft: false
+cover: /covers/Kelman Filter.svg
 ---
 ## 一、概述
 
